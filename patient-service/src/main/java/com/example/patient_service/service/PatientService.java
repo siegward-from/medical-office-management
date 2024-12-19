@@ -1,45 +1,46 @@
 package com.example.patient_service.service;
 
 import com.example.patient_service.model.Patient;
+import com.example.patient_service.repository.PatientRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class PatientService {
-    private final List<Patient> patients = new ArrayList<>();
-    private final AtomicLong idGenerator = new AtomicLong();
+
+    @Autowired
+    private PatientRepository patientRepository;
 
     public List<Patient> getAllPatients() {
-        return new ArrayList<>(patients);
+        return patientRepository.findAll();
     }
 
     public Optional<Patient> getPatientById(Long id) {
-        return patients.stream()
-                .filter(patient -> patient.getId().equals(id))
-                .findFirst();
+        return patientRepository.findById(id);
     }
 
-    public Patient createPatient(Patient patient) {
-        patient.setId(idGenerator.incrementAndGet());
-        patients.add(patient);
-        return patient;
+    public Patient addPatient(Patient patient) {
+        return patientRepository.save(patient);
     }
 
-    public Patient updatePatient(Long id, Patient updatedPatient) {
-        for (int i = 0; i < patients.size(); i++) {
-            if (patients.get(i).getId().equals(id)) {
-                updatedPatient.setId(id);
-                patients.set(i, updatedPatient);
-                return updatedPatient;
-            }
+    public Optional<Patient> updatePatient(Long id, Patient updatedPatient) {
+        return patientRepository.findById(id).map(patient -> {
+            patient.setFirstName(updatedPatient.getFirstName());
+            patient.setLastName(updatedPatient.getLastName());
+            patient.setEmail(updatedPatient.getEmail());
+            patient.setPhoneNumber(updatedPatient.getPhoneNumber());
+            return patientRepository.save(patient);
+        });
+    }
+
+    public boolean deletePatient(Long id) {
+        if (patientRepository.existsById(id)) {
+            patientRepository.deleteById(id);
+            return true;
         }
-        throw new RuntimeException("Patient not found with id: " + id);
-    }
-
-    public void deletePatient(Long id) {
-        patients.removeIf(patient -> patient.getId().equals(id));
+        return false;
     }
 }
