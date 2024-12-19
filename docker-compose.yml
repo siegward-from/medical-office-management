@@ -1,0 +1,117 @@
+version: '3.8'
+
+services:
+  eureka-server:
+    container_name: eureka-server
+    build: 
+      context: ./eurekaserver
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - EUREKA_CLIENT_REGISTER_WITH_EUREKA=false
+      - EUREKA_CLIENT_FETCH_REGISTRY=false
+    networks:
+      - medical-network
+
+  api-gateway-service:
+    container_name: api-gateway-service
+    build: 
+      context: ./api-gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+    networks:
+      - medical-network
+    depends_on:
+      - eureka-server
+
+  practitioner-service:
+    container_name: practitioner-service
+    build: 
+      context: ./practitioner-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+    volumes:
+      - practitioner_data:/data
+    networks:
+      - medical-network
+    depends_on:
+      - eureka-server
+
+  patient-service:
+    container_name: patient-service
+    build: 
+      context: ./patient-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+    volumes:
+      - patient_data:/data
+    networks:
+      - medical-network
+    depends_on:
+      - eureka-server
+
+  medical-record-service:
+    container_name: medical-record-service
+    build: 
+      context: ./medical-record-service
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+    volumes:
+      - medical_record_data:/data
+    networks:
+      - medical-network
+    depends_on:
+      - eureka-server
+      - patient-service
+      - practitioner-service
+
+  appointment-service:
+    container_name: appointment-service
+    build: 
+      context: ./appointment-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+    volumes:
+      - appointment_data:/data
+    networks:
+      - medical-network
+    depends_on:
+      - eureka-server
+      - patient-service
+      - practitioner-service
+
+networks:
+  medical-network:
+    driver: bridge
+
+volumes:
+  practitioner_data:
+    driver: local
+  patient_data:
+    driver: local
+  medical_record_data:
+    driver: local
+  appointment_data:
+    driver: local
