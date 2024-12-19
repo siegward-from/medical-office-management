@@ -8,15 +8,41 @@ spring:
           uri: lb://patient-service
           predicates:
             - Path=/patients/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: patientService
+                fallbackUri: forward:/fallback/patient
+        
         - id: practitioner-service
           uri: lb://practitioner-service
           predicates:
             - Path=/practitioners/**
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: practitionerService
+                fallbackUri: forward:/fallback/practitioner
+        
+        - id: appointment-service
+          uri: lb://appointment-service
+          predicates:
+            - Path=/appointments/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: appointmentService
+                fallbackUri: forward:/fallback/appointment
+        
+        - id: medical-record-service
+          uri: lb://medical-record-service
+          predicates:
+            - Path=/medical-records/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: medicalRecordService
+                fallbackUri: forward:/fallback/medical-record
 
 resilience4j:
   circuitbreaker:
@@ -24,8 +50,12 @@ resilience4j:
       default:
         registerHealthIndicator: true
         slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
         failureRateThreshold: 50
-        waitDurationInOpenState: 10000
+        eventConsumerBufferSize: 10
     instances:
       patientService:
         baseConfig: default
@@ -35,3 +65,26 @@ resilience4j:
         baseConfig: default
       medicalRecordService:
         baseConfig: default
+  
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 3s
+    instances:
+      patientService:
+        baseConfig: default
+      practitionerService:
+        baseConfig: default
+      appointmentService:
+        baseConfig: default
+      medicalRecordService:
+        baseConfig: default
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
