@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Eureka Dashboard</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.2/css/bootstrap.min.css}"/>
+    <style>
+        .status-up { color: green; }
+        .status-down { color: red; }
+        .service-card { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">Eureka Dashboard</a>
+            <a href="/admin/dashboard" class="btn btn-outline-light">Admin Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Services Enregistrés</h4>
+                    </div>
+                    <div class="card-body">
+                        <h5>Total des instances: <span th:text="${totalInstances}">0</span></h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div th:each="app : ${applications}" class="card service-card">
+                    <div class="card-header">
+                        <h5 th:text="${app.name}">Service Name</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Instance ID</th>
+                                    <th>Status</th>
+                                    <th>Host</th>
+                                    <th>Port</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="instance : ${app.instances}">
+                                    <td th:text="${instance.instanceId}">id</td>
+                                    <td>
+                                        <span th:class="${instance.status.toString() == 'UP' ? 'status-up' : 'status-down'}"
+                                              th:text="${instance.status}">status</span>
+                                    </td>
+                                    <td th:text="${instance.hostName}">host</td>
+                                    <td th:text="${instance.port}">port</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html> 
